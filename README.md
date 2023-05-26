@@ -6,6 +6,8 @@ This was made to generate my website [marc-julian.de](https://www.marc-julian.de
 
 ## Basic Usage 
 
+Make sure to update all of the hardcoded values (e.g. default values for post metadata) and the template html files.
+
 Create a file `paths.py` and specify the variables `BLOG_IN` (path to markdown files) and `BLOG_OUT` (path to folder where website should be generated).
 
 Then call `blog.py` like this:
