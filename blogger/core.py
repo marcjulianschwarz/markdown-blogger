@@ -5,6 +5,16 @@ from typing import List
 
 import markdown2
 from frontmatter import Post
+from blogger.constants import (
+    BLOG_ARCHIVED_KEY,
+    BLOG_AUTHOR_KEY,
+    BLOG_DATE_KEY,
+    BLOG_PUBLISHED_KEY,
+    BLOG_SKIP_KEY,
+    BLOG_SUBTITLE_KEY,
+    BLOG_TAGS_KEY,
+    BLOG_TITLE_KEY,
+)
 
 from blogger.templates import Header, Templates
 from blogger.utils import *
@@ -47,7 +57,12 @@ def get_no_none(objects):
 
 def get_date(post: Post):
     date = get_no_none(
-        [post.get("date"), post.get("Date"), post.get("DATE"), post.get("published")]
+        [
+            post.get(BLOG_DATE_KEY),
+            post.get("Date"),
+            post.get("DATE"),
+            post.get(BLOG_PUBLISHED_KEY),
+        ]
     )
     if len(date) == 0:
         return dt(1970, 1, 1)
@@ -61,23 +76,14 @@ def get_date(post: Post):
 
 
 def get_tags(post: Post) -> List[Tag]:
-    tags = get_no_none(
-        [
-            post.get("tags"),
-            post.get("Tags"),
-            post.get("TAGS"),
-            post.get("tag"),
-            post.get("Tag"),
-            post.get("TAG"),
-        ]
-    )
-    if len(tags) == 0:
-        return []
-    else:
-        return [
-            Tag(name=tag.strip(), link=f"tags/{tag.strip()}.html", color="tag-post")
-            for tag in tags[0].split(",")
-        ]
+    tags = post.get(BLOG_TAGS_KEY, [])
+    tags2 = post.get("tag", [])
+    tags.extend(tags2)
+
+    return [
+        Tag(name=tag.strip(), link=f"tags/{tag.strip()}.html", color="tag-post")
+        for tag in tags
+    ]
 
 
 class TagList:
@@ -103,9 +109,9 @@ class TagList:
 
 class BlogPost:
     def __init__(self, post_meta: Post, file: Path):
-        self.title = post_meta.get("title") or file.stem
-        self.subtitle = post_meta.get("subtitle") or ""
-        self.author = post_meta.get("author") or "Marc Julian Schwarz"
+        self.title = post_meta.get(BLOG_TITLE_KEY) or file.stem
+        self.subtitle = post_meta.get(BLOG_SUBTITLE_KEY) or ""
+        self.author = post_meta.get(BLOG_AUTHOR_KEY) or "Marc Julian Schwarz"
         self.desc = f"{self.title} - {self.subtitle} - {self.author}"
         self.content = post_meta.content
         self.path = file
@@ -173,16 +179,16 @@ class BlogPost:
         return key in post.keys() and post[key] is not None and post[key] != ""
 
     def _is_demo(self, post: Post) -> bool:
-        if self._is_property("published", post):
-            return post["published"] == "demo"
-        elif self._is_property("date", post):
-            return post["date"] == "demo"
+        if self._is_property(BLOG_SKIP_KEY, post):
+            return post[BLOG_SKIP_KEY]
         else:
-            return True
+            return False
 
     def _is_archived(self, post_meta: Post) -> bool:
-        if self._is_property("archived", post_meta):
-            return post_meta["archived"] == 1
+        if self._is_property(BLOG_ARCHIVED_KEY, post_meta):
+            return post_meta[BLOG_ARCHIVED_KEY]
+        else:
+            return False
 
 
 class BlogPostList:

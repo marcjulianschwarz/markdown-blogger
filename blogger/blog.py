@@ -9,6 +9,13 @@ from frontmatter import Post
 from tqdm import tqdm
 
 from blogger.blog_index import BlogIndex
+from blogger.constants import (
+    BLOG_ARCHIVED_KEY,
+    BLOG_DATE_KEY,
+    BLOG_DEMO_VALUE,
+    BLOG_PUBLISHED_KEY,
+    BLOG_SKIP_KEY,
+)
 from blogger.core import BlogPost, TagPage
 from blogger.sitemap import Sitemap
 from blogger.utils import *
@@ -35,8 +42,8 @@ class Blog:
         self.sitemap = Sitemap()
 
     def _is_skip(self, post: Post) -> bool:
-        if self._is_property("skip", post):
-            return post["skip"] == 1
+        if self._is_property(BLOG_SKIP_KEY, post):
+            return post[BLOG_SKIP_KEY] == 1
 
         if self.show_demo:
             return False
@@ -47,16 +54,16 @@ class Blog:
         return key in post.keys() and post[key] is not None and post[key] != ""
 
     def _is_demo(self, post: Post) -> bool:
-        if self._is_property("published", post):
-            return post["published"] == "demo"
-        elif self._is_property("date", post):
-            return post["date"] == "demo"
+        if self._is_property(BLOG_PUBLISHED_KEY, post):
+            return post[BLOG_PUBLISHED_KEY] == "demo"
+        elif self._is_property(BLOG_DATE_KEY, post):
+            return post[BLOG_DATE_KEY] == BLOG_DEMO_VALUE
         else:
             return True
 
     def _is_archived(self, post_meta: Post) -> bool:
-        if self._is_property("archived", post_meta):
-            return post_meta["archived"] == 1
+        if self._is_property(BLOG_ARCHIVED_KEY, post_meta):
+            return post_meta[BLOG_ARCHIVED_KEY] == 1
 
     def build_index_and_create_posts(self):
         markdown_files = list(self.input.glob("*.md"))
