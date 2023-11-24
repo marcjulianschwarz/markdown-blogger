@@ -17,7 +17,7 @@ def render_tag_list(tags: List[Tag]) -> str:
     for tag in tags:
         if tag and _valid_tag_name(tag.name):
             tags_html += Templates.tag().render(
-                name=str(tag.name), link="/" + tag.path, color_class=tag.color
+                name=str(tag.name), link=tag.path, color_class=tag.color
             )
     return tags_html
 
@@ -36,11 +36,11 @@ def render_blog_list(posts: BlogPost) -> str:
     return post_list
 
 
-def render_tag_page(self) -> str:
-    post_list = render_blog_list(self.posts)
+def render_tag_page(tag: Tag, posts: List[BlogPost]) -> str:
+    post_list = render_blog_list(posts)
     return Templates.tag_page().render(
-        name=self.tag.name,
-        count=len(self.posts),
+        name=tag.name,
+        count=len(posts),
         post_list=post_list,
         header=Header().render(),
     )

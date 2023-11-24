@@ -38,7 +38,7 @@ class BlogMode(Enum):
 
 def is_skip(post: Post) -> bool:
     if has_property(BLOG_SKIP_KEY, post):
-        return post[BLOG_SKIP_KEY] == 1
+        return post[BLOG_SKIP_KEY]
 
 
 def has_property(key: str, post: Post) -> bool:
@@ -56,7 +56,7 @@ def is_demo(post: Post) -> bool:
 
 def is_archived(post_meta: Post) -> bool:
     if has_property(BLOG_ARCHIVED_KEY, post_meta):
-        return post_meta[BLOG_ARCHIVED_KEY] == 1
+        return post_meta[BLOG_ARCHIVED_KEY]
 
 
 def get_date(post: Post):

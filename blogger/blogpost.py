@@ -29,13 +29,15 @@ class BlogPost:
         self.date = (
             get_date(post_meta) if not self._is_demo(post_meta) else dt.now().date()
         )
-        year = str(self.date.year)
-        month = str(self.date.month).zfill(2)
+        self.display_year = str(self.date.year)
+        self.display_month = str(self.date.month).zfill(2)
 
         self.tags = self.get_tags(post_meta)
 
         self.archived = self.date.year < 2021 or is_archived(post_meta)
-        self.post_url = f"/posts/{year}/{month}/{self.path.stem}.html"
+        self.post_url = (
+            f"/{self.display_year}/{self.display_month}/{self.path.stem}.html"
+        )
 
     def get_tags(self, post_meta: Post) -> List[Tag]:
         found_tags = post_meta.get(BLOG_TAGS_KEY, [])
@@ -45,7 +47,7 @@ class BlogPost:
         tags = [
             Tag(
                 name=tag.strip(),
-                path=f"{TAGS_PATH}/{tag.strip()}.html",
+                path=f"/{TAGS_PATH}/{tag.strip()}.html",
                 color="tag-post",
             )
             for tag in found_tags
@@ -60,7 +62,7 @@ class BlogPost:
         return tags
 
     def save(self, output_path: Path, post_html: str):
-        path = output_path / str(self.date.year) / str(self.date.month)
+        path = output_path / self.display_year / self.display_month
         path.mkdir(parents=True, exist_ok=True)
         (path / f"{self.path.stem}.html").write_text(post_html)
 
