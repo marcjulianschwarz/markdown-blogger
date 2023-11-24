@@ -1,14 +1,17 @@
 from functools import cache
 from pathlib import Path
 
-from blogger.utils import *
+from blogger.utils import BlogMode
 
 
 def read_template(name: str):
+    """Reads a template from the temmplates folder"""
     return open(f"templates/{name}.html", "r").read()
 
 
 class Template:
+    """Thin wrapper around template strings that can be formatted with the render method."""
+
     def __init__(self, template_name) -> None:
         self._template = read_template(template_name)
 

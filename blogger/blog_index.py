@@ -1,39 +1,56 @@
+from pathlib import Path
 from typing import List, Set
 
-from blogger.core import *
-from blogger.templates import *
-from blogger.utils import *
+from blogger.core import BlogPost, Tag, render_blog_list, render_tag_list
+from blogger.templates import Header, Templates
+from blogger.utils import BlogMode
 
 
 class BlogIndex:
     def __init__(self) -> None:
+        """Stores all blog posts and tags."""
         self.posts: List[BlogPost] = []
         self.tags: Set[Tag] = set()
 
-    def sort_posts(self):
-        self.posts.sort(key=lambda post: post.date, reverse=True)
+    def sort_posts(self, by: str = "date"):
+        if by == "date":
+            self.posts.sort(key=lambda post: post.date, reverse=True)
+        elif by == "title":
+            self.posts.sort(key=lambda post: post.title, reverse=True)
+        else:
+            raise ValueError(f"Unknown sort key: {by}")
 
     # def sorted_tags(self, tags: Set[Tag]) -> Set[Tag]:
     #     return set(sorted(list(tags), key=lambda tag: tag.lower()))
-
-    def archived_posts(self) -> List[BlogPost]:
-        return [post for post in self.posts if post.archived]
-
-    def non_archived_posts(self) -> List[BlogPost]:
-        return [post for post in self.posts if not post.archived]
 
     def add_post(self, post: BlogPost):
         self.posts.append(post)
         self.tags.update(post.tags)
 
     def _render_index(self, output_path: Path, blog_mode: BlogMode) -> str:
-        archived_posts = self.archived_posts()
-        non_archived_posts = self.non_archived_posts()
+        archived_posts = [post for post in self.posts if post.archived]
+        non_archived_posts = [post for post in self.posts if not post.archived]
 
-        post_list = BlogPostList(non_archived_posts).render(output_path, blog_mode)
-        archived_post_list = BlogPostList(archived_posts).render(output_path, blog_mode)
+        post_list = render_blog_list(non_archived_posts)
+        archived_post_list = render_blog_list(archived_posts)
 
         self.tags = sorted(list(self.tags), key=lambda tag: tag.lower())
+
+        # add years to the end of the tag list
+        year_tags = self._create_year_tags()
+        self.tags.extend(sorted(list(year_tags)))
+
+        return Templates.index().render(
+            recent_count=len(non_archived_posts),
+            archived_count=len(archived_posts),
+            post_list=post_list,
+            archived_post_list=archived_post_list,
+            all_tags_list=render_tag_list(self.tags),
+            header=Header().render(blog_mode, output_path),
+        )
+
+    def _create_year_tags(self) -> Set[Tag]:
+        """Creates a set of year tags from the posts publish dates."""
         year_tags = set()
         for post in self.posts:
             year_tags.add(
@@ -43,16 +60,7 @@ class BlogIndex:
                     color="tag-year",
                 )
             )
-        self.tags.extend(sorted(list(year_tags)))
-
-        return Templates.index().render(
-            recent_count=len(non_archived_posts),
-            archived_count=len(archived_posts),
-            post_list=post_list,
-            archived_post_list=archived_post_list,
-            all_tags_list=TagList(self.tags).render(output_path, blog_mode),
-            header=Header().render(blog_mode, output_path),
-        )
+        return year_tags
 
     def save_index(self, blog_mode: BlogMode, output_path: Path):
         index_html = self._render_index(output_path, blog_mode)
