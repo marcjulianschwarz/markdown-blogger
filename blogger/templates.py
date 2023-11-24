@@ -58,8 +58,5 @@ class Templates:
 
 class Header:
     @staticmethod
-    def render(mode: BlogMode, output: Path):
-        if mode == BlogMode.WEB:
-            return Templates.header().render(home_link="/")
-        else:
-            return Templates.header().render(home_link=str(output) + "/index.html")
+    def render():
+        return Templates.header().render(home_link="/")

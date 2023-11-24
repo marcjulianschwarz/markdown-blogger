@@ -60,14 +60,16 @@ def is_archived(post_meta: Post) -> bool:
 
 
 def get_date(post: Post):
-    date = filter(
-        lambda x: x is not None,
-        [
-            post.get(BLOG_DATE_KEY),
-            post.get("Date"),
-            post.get("DATE"),
-            post.get(BLOG_PUBLISHED_KEY),
-        ],
+    date = list(
+        filter(
+            lambda x: x is not None,
+            [
+                post.get(BLOG_DATE_KEY),
+                post.get("Date"),
+                post.get("DATE"),
+                post.get(BLOG_PUBLISHED_KEY),
+            ],
+        )
     )
     if len(date) == 0:
         return dt(1970, 1, 1)

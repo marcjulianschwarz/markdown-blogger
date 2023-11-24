@@ -6,8 +6,9 @@ import frontmatter
 from tqdm import tqdm
 
 from blogger.blog_index import BlogIndex
+from blogger.blogpost import BlogPost
 from blogger.constants import TAGS_PATH
-from blogger.core import BlogPost, render, render_tag_page
+from blogger.render import render_blog_post, render_tag_page
 from blogger.sitemap import Sitemap
 from blogger.utils import is_demo, is_skip
 
@@ -45,12 +46,8 @@ class Blog:
             file_content = file.read_text()
             post_meta = frontmatter.loads(file_content)
             last_modified = dt.fromtimestamp(file.stat().st_mtime)
-
-            if not self.show_demo and (is_skip(post_meta) or is_demo(post_meta)):
-                continue
-
             post = BlogPost(post_meta, file)
-            post_html = post.render()
+            post_html = render_blog_post(post)
             post.save(self.output, post_html)
 
             self.blog_index.add_post(post)
@@ -74,7 +71,7 @@ class Blog:
             (self.output / TAGS_PATH / f"{tag.name}.html").write_text(tag_page)
 
     def create_index(self):
-        self.blog_index.save_index(self.mode, self.output)
+        self.blog_index.save_index(self.output)
 
     def create_sitemap(self):
         self.sitemap.save_sitemap(self.output)

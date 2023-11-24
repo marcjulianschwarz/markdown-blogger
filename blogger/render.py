@@ -1,7 +1,11 @@
 from typing import List
 
-from blogger.core import BlogPost, Tag
+import markdown2
+
+from blogger.blogpost import BlogPost
+from blogger.tag import Tag
 from blogger.templates import Header, Templates
+from blogger.utils import MARKDOWN_EXTRAS
 
 
 def _valid_tag_name(tag_name: str) -> bool:
@@ -40,3 +44,35 @@ def render_tag_page(self) -> str:
         post_list=post_list,
         header=Header().render(),
     )
+
+
+def render_blog_post(post: BlogPost) -> str:
+    html = markdown2.markdown(
+        post.content,
+        extras=MARKDOWN_EXTRAS,
+    )
+
+    tag_list = render_tag_list(post.tags)
+
+    meta = Templates.meta().render(
+        meta_desc=post.desc,
+        meta_author=post.author,
+        meta_keywords=",".join([tag.name for tag in post.tags]),
+    )
+
+    post_html = Templates.post().render(
+        content=html,
+        title=post.title,
+        subtitle=post.subtitle,
+        author=post.author,
+        date=post.date.strftime("%d.%m.%Y") or "",
+        tags=tag_list,
+        meta=meta,
+        header=Header.render(),
+    )
+
+    # TODO: fix images / media
+    # if blog_mode == BlogMode.LOCAL:
+    #     post_html = post_html.replace("/images/", str(output_path) + "/images/")
+
+    return post_html

@@ -2,7 +2,6 @@ from datetime import datetime as dt
 from pathlib import Path
 from typing import List
 
-import markdown2
 from frontmatter import Post
 
 from blogger.constants import (
@@ -14,9 +13,8 @@ from blogger.constants import (
     TAGS_PATH,
     YEARS_PATH,
 )
-from blogger.core import Tag, render_tag_list
-from blogger.templates import Header, Templates
-from blogger.utils import MARKDOWN_EXTRAS, get_date, has_property, is_archived
+from blogger.tag import Tag
+from blogger.utils import get_date, has_property, is_archived
 
 
 class BlogPost:
@@ -60,37 +58,6 @@ class BlogPost:
             ),
         )
         return tags
-
-    def render(self) -> str:
-        html = markdown2.markdown(
-            self.content,
-            extras=MARKDOWN_EXTRAS,
-        )
-
-        tag_list = render_tag_list(self.tags)
-
-        meta = Templates.meta().render(
-            meta_desc=self.desc,
-            meta_author=self.author,
-            meta_keywords=",".join([tag.name for tag in self.tags]),
-        )
-
-        post_html = Templates.post().render(
-            content=html,
-            title=self.title,
-            subtitle=self.subtitle,
-            author=self.author,
-            date=self.date.strftime("%d.%m.%Y") or "",
-            tags=tag_list,
-            meta=meta,
-            header=Header.render(),
-        )
-
-        # TODO: fix images / media
-        # if blog_mode == BlogMode.LOCAL:
-        #     post_html = post_html.replace("/images/", str(output_path) + "/images/")
-
-        return post_html
 
     def save(self, output_path: Path, post_html: str):
         path = output_path / str(self.date.year) / str(self.date.month)

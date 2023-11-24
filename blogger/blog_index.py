@@ -1,9 +1,11 @@
 from pathlib import Path
 from typing import List, Set
 
-from blogger.core import BlogPost, Tag, render_blog_list, render_tag_list
+from blogger.blogpost import BlogPost
+from blogger.constants import YEARS_PATH
+from blogger.render import render_blog_list, render_tag_list
+from blogger.tag import Tag
 from blogger.templates import Header, Templates
-from blogger.utils import BlogMode
 
 
 class BlogIndex:
@@ -20,14 +22,11 @@ class BlogIndex:
         else:
             raise ValueError(f"Unknown sort key: {by}")
 
-    # def sorted_tags(self, tags: Set[Tag]) -> Set[Tag]:
-    #     return set(sorted(list(tags), key=lambda tag: tag.lower()))
-
     def add_post(self, post: BlogPost):
         self.posts.append(post)
         self.tags.update(post.tags)
 
-    def _render_index(self, output_path: Path, blog_mode: BlogMode) -> str:
+    def _render_index(self) -> str:
         archived_posts = [post for post in self.posts if post.archived]
         non_archived_posts = [post for post in self.posts if not post.archived]
 
@@ -46,7 +45,7 @@ class BlogIndex:
             post_list=post_list,
             archived_post_list=archived_post_list,
             all_tags_list=render_tag_list(self.tags),
-            header=Header().render(blog_mode, output_path),
+            header=Header().render(),
         )
 
     def _create_year_tags(self) -> Set[Tag]:
@@ -56,13 +55,12 @@ class BlogIndex:
             year_tags.add(
                 Tag(
                     name=str(post.date.year),
-                    link=f"year/{post.date.year}.html",
+                    path=f"{YEARS_PATH}/{post.date.year}.html",
                     color="tag-year",
                 )
             )
         return year_tags
 
-    def save_index(self, blog_mode: BlogMode, output_path: Path):
-        index_html = self._render_index(output_path, blog_mode)
-        with open(output_path / "index.html", "w") as f:
-            f.write(index_html)
+    def save_index(self, output_path: Path):
+        index_html = self._render_index()
+        (output_path / "index.html").write_text(index_html)
