@@ -1,4 +1,8 @@
+import http
+import os
+import socketserver
 import urllib.parse
+import webbrowser
 from datetime import datetime as dt
 from pathlib import Path
 
@@ -73,10 +77,32 @@ class Blog:
 
             tag_page = render_tag_page(tag, posts)
             (self.output / TAGS_PATH).mkdir(parents=True, exist_ok=True)
-            (self.output / TAGS_PATH / f"{tag.name}.html").write_text(tag_page)
+            (self.output / TAGS_PATH / f"{tag.id}.html").write_text(tag_page)
 
     def create_index(self):
         self.blog_index.save_index(self.output)
 
     def create_sitemap(self):
         self.sitemap.save_sitemap(self.output)
+
+    def open_blog(self):
+        # start http server at output path
+        handler = create_handler(self.output)
+
+        with socketserver.TCPServer(("", 8000), handler) as httpd:
+            print("serving at port", 8000)
+            webbrowser.open("http://localhost:8000")
+            httpd.serve_forever()
+
+
+def create_handler(directory):
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            self.directory = directory
+            super().__init__(*args, directory=directory, **kwargs)
+
+        def translate_path(self, path):
+            path = os.path.normpath(path)
+            return os.path.join(self.directory, path.lstrip("/"))
+
+    return Handler

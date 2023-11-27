@@ -47,16 +47,16 @@ class BlogPost:
         tags = [
             Tag(
                 name=tag.strip(),
-                path=f"/{TAGS_PATH}/{tag.strip()}.html",
                 color="tag-post",
+                path=TAGS_PATH,
             )
             for tag in found_tags
         ]
         tags.append(
             Tag(
                 name=self.date.year,
-                path=f"/{YEARS_PATH}/{self.date.year}.html",
                 color="tag-year",
+                path=YEARS_PATH,
             ),
         )
         return tags

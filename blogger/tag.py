@@ -1,8 +1,12 @@
+from blogger.constants import TAGS_PATH
+
+
 class Tag:
-    def __init__(self, name: str | int, path: str, color: str) -> None:
+    def __init__(self, name: str | int, color: str, path) -> None:
         self.name = str(name)
-        self.path = path
         self.color = color
+        self.id = self.name.replace(" ", "").lower()
+        self.path = f"/{path}/{self.id}.html"
 
     def __hash__(self):
         return hash(self.name)

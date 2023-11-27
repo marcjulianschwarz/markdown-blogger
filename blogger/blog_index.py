@@ -36,8 +36,8 @@ class BlogIndex:
         self.tags = sorted(list(self.tags), key=lambda tag: tag.lower())
 
         # add years to the end of the tag list
-        #year_tags = self._create_year_tags()
-        #self.tags.extend(sorted(list(year_tags)))
+        # year_tags = self._create_year_tags()
+        # self.tags.extend(sorted(list(year_tags)))
 
         return Templates.index().render(
             recent_count=len(non_archived_posts),
@@ -55,7 +55,7 @@ class BlogIndex:
             year_tags.add(
                 Tag(
                     name=str(post.date.year),
-                    path=f"/{YEARS_PATH}/{post.date.year}.html",
+                    path=YEARS_PATH,
                     color="tag-year",
                 )
             )
