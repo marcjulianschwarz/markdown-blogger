@@ -1,3 +1,5 @@
+import http.server
+import os
 from datetime import datetime as dt
 from enum import Enum
 
@@ -82,3 +84,16 @@ def get_date(post: Post):
 
     else:
         return date[0]
+
+
+def create_http_handler(directory):
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            self.directory = directory
+            super().__init__(*args, directory=directory, **kwargs)
+
+        def translate_path(self, path):
+            path = os.path.normpath(path)
+            return os.path.join(self.directory, path.lstrip("/"))
+
+    return Handler

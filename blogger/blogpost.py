@@ -25,6 +25,7 @@ class BlogPost:
         self.desc = f"{self.title} - {self.subtitle} - {self.author}"
         self.content = post_meta.content
         self.path = file
+        self.last_modified = dt.fromtimestamp(file.stat().st_mtime)
 
         self.date = (
             get_date(post_meta) if not self._is_demo(post_meta) else dt.now().date()
@@ -48,7 +49,6 @@ class BlogPost:
             Tag(
                 name=tag.strip(),
                 color="tag-post",
-                path=TAGS_PATH,
             )
             for tag in found_tags
         ]
@@ -56,7 +56,6 @@ class BlogPost:
             Tag(
                 name=self.date.year,
                 color="tag-year",
-                path=YEARS_PATH,
             ),
         )
         return tags
@@ -71,3 +70,38 @@ class BlogPost:
             return post[BLOG_SKIP_KEY]
         else:
             return False
+
+    def to_json(self):
+        return {
+            "title": self.title,
+            "subtitle": self.subtitle,
+            "author": self.author,
+            "desc": self.desc,
+            "content": self.content,
+            "path": str(self.path),
+            "date": self.date.strftime("%Y-%m-%d"),
+            "display_year": self.display_year,
+            "display_month": self.display_month,
+            "tags": [tag.to_json() for tag in self.tags],
+            "archived": self.archived,
+            "post_url": self.post_url,
+            "last_modified": self.last_modified.strftime("%Y-%m-%d"),
+        }
+
+    @classmethod
+    def from_json(cls, data: dict):
+        post = cls.__new__(cls)
+        post.title = data["title"]
+        post.subtitle = data["subtitle"]
+        post.author = data["author"]
+        post.desc = data["desc"]
+        post.content = data["content"]
+        post.path = Path(data["path"])
+        post.date = dt.strptime(data["date"], "%Y-%m-%d").date()
+        post.display_year = data["display_year"]
+        post.display_month = data["display_month"]
+        post.tags = [Tag.from_json(tag) for tag in data["tags"]]
+        post.archived = data["archived"]
+        post.post_url = data["post_url"]
+        post.last_modified = dt.strptime(data["last_modified"], "%Y-%m-%d")
+        return post

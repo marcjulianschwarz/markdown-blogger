@@ -1,35 +1,42 @@
-import http
-import os
+import socket
 import socketserver
 import urllib.parse
 import webbrowser
-from datetime import datetime as dt
-from pathlib import Path
 
 import frontmatter
 from tqdm import tqdm
 
 from blogger.blog_index import BlogIndex
 from blogger.blogpost import BlogPost
-from blogger.constants import TAGS_PATH
+from blogger.conf import BlogConfig
 from blogger.render import render_blog_post, render_tag_page
 from blogger.sitemap import Sitemap
-from blogger.utils import is_demo, is_skip
+from blogger.utils import create_http_handler, is_skip
 
 
 class Blog:
     def __init__(
         self,
-        markdown_path: str,
-        output_path: str,
-        show_demo: bool = False,
+        markdown_path: str | None = None,
+        output_path: str | None = None,
+        config: BlogConfig | None = None,
     ):
-        self.input = Path(markdown_path)
-        self.output = Path(output_path)
-        self.show_demo = show_demo
+        # Initialize config
+        if not config:
+            if not markdown_path or not output_path:
+                raise ValueError(
+                    "You need to either provide a config or markdown and output path."
+                )
+            config = BlogConfig.from_dict(
+                {"blog_in_path": markdown_path, "blog_out_path": output_path}
+            )
+        self.config = config
 
         # Initialize blog index and sitemap file
-        self.blog_index = BlogIndex()
+        if config.blog_index_path.exists():
+            self.blog_index = BlogIndex.from_json(config.blog_index_path)
+        else:
+            self.blog_index = BlogIndex(config.blog_index_path)
         self.sitemap = Sitemap()
 
     def build_index_and_create_posts(self):
@@ -43,26 +50,29 @@ class Blog:
         6. Update sitemap
         7. Save post
         """
-        markdown_files = list(self.input.glob("*.md"))
-        for file in (pbar := tqdm(markdown_files)):
-            pbar.set_description(f"Creating {file.name}")
-
+        markdown_files = list(self.config.blog_in_path.glob("*.md"))
+        self.log(str(len(markdown_files)), "FILES")
+        for file in markdown_files:
             file_content = file.read_text()
             post_meta = frontmatter.loads(file_content)
-            last_modified = dt.fromtimestamp(file.stat().st_mtime)
 
-            if is_skip(post_meta) or is_demo(post_meta):
+            if is_skip(post_meta):
+                self.log(file.name, "SKIP")
+                continue
+            if self.blog_index.not_modified(file):
+                self.log(file.name, "NOMOD")
                 continue
 
+            self.log(file.name, "POST")
             post = BlogPost(post_meta, file)
             post_html = render_blog_post(post)
-            post.save(self.output, post_html)
+            post.save(self.config.blog_out_path, post_html)
 
             self.blog_index.add_post(post)
 
             self.sitemap.update_sitemap(
                 url=f"https://www.marc-julian.de/posts/{str(post.date.year)}/{str(post.date.month)}/{urllib.parse.quote(file.stem)}.html",
-                lastmod=last_modified.strftime("%Y-%m-%d"),
+                lastmod=post.last_modified.strftime("%Y-%m-%d"),
             )
 
     def create_tag_pages(self):
@@ -76,33 +86,39 @@ class Blog:
             ]
 
             tag_page = render_tag_page(tag, posts)
-            (self.output / TAGS_PATH).mkdir(parents=True, exist_ok=True)
-            (self.output / TAGS_PATH / f"{tag.id}.html").write_text(tag_page)
+            (self.config.blog_out_path / self.config.tags_path).mkdir(
+                parents=True, exist_ok=True
+            )
+            (
+                self.config.blog_out_path / self.config.tags_path / f"{tag.id}.html"
+            ).write_text(tag_page)
 
     def create_index(self):
-        self.blog_index.save_index(self.output)
+        self.blog_index.save_index(self.config.blog_out_path)
 
     def create_sitemap(self):
-        self.sitemap.save_sitemap(self.output)
+        self.sitemap.save_sitemap(self.config.blog_out_path)
 
     def open_blog(self):
         # start http server at output path
-        handler = create_handler(self.output)
+        handler = create_http_handler(self.config.blog_out_path)
+        httpd = None
 
-        with socketserver.TCPServer(("", 8000), handler) as httpd:
-            print("serving at port", 8000)
-            webbrowser.open("http://localhost:8000")
-            httpd.serve_forever()
+        try:
+            with MyTCPServer(("", 8000), handler) as httpd:
+                httpd.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                print("serving at port", 8000)
+                webbrowser.open("http://localhost:8000")
+                httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("Stopping server...")
+        if httpd:
+            httpd.shutdown()
+
+    def log(self, message: str, modifier: str = "MESSAGE"):
+        padding = max(0, 20 - len(modifier))
+        print(f"[{modifier}]{' ' * padding}{message}")
 
 
-def create_handler(directory):
-    class Handler(http.server.SimpleHTTPRequestHandler):
-        def __init__(self, *args, **kwargs):
-            self.directory = directory
-            super().__init__(*args, directory=directory, **kwargs)
-
-        def translate_path(self, path):
-            path = os.path.normpath(path)
-            return os.path.join(self.directory, path.lstrip("/"))
-
-    return Handler
+class MyTCPServer(socketserver.TCPServer):
+    allow_reuse_address = True

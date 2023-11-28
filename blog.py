@@ -1,39 +1,25 @@
-from blogger.blog import Blog
-from blogger.utils import BlogMode
 from argparse import ArgumentParser
-from paths import BLOG_IN, BLOG_OUT
+
+from blogger.blog import Blog
+from blogger.conf import BlogConfig
 
 parser = ArgumentParser()
-parser.add_argument("-w", "--web", action="store_true")
-parser.add_argument("-l", "--local", action="store_true")
-parser.add_argument(
-    "-d", "--show_demo", type=bool, default=False, choices=[True, False]
-)
-parser.add_argument(
-    "-o",
-    "--open",
-    type=bool,
-    default=False,
-    choices=[True, False],
-    const=True,
-    nargs="?",
-)
-
+parser.add_argument("action", choices=["update", "show"])
 args = parser.parse_args()
 
+config = BlogConfig.from_yaml("conf.yaml")
+blog = Blog(config=config)
 
-blog = Blog(
-    BLOG_IN,
-    BLOG_OUT,
-    mode=BlogMode.WEB if args.web else BlogMode.LOCAL,
-    show_demo=args.show_demo,
-)
+if args.action == "update":
+    blog.build_index_and_create_posts()
+    blog.create_index()
+    blog.create_tag_pages()
+    blog.create_sitemap()
 
-blog.delete_output()
-blog.build_index_and_create_posts()
-blog.create_index()
-blog.create_tag_pages()
-blog.create_sitemap()
+    blog.blog_index.to_json()
 
-if args.open:
-    blog.open_index()
+elif args.action == "show":
+    blog.open_blog()
+
+else:
+    print("Please provide either 'update' or 'show' as an argument.")

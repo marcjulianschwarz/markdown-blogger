@@ -17,7 +17,7 @@ def render_tag_list(tags: List[Tag]) -> str:
     for tag in tags:
         if tag and _valid_tag_name(tag.name):
             tags_html += Templates.tag().render(
-                name=str(tag.name), link=tag.path, color_class=tag.color
+                name=str(tag.name), link=f"/tags/{tag.id}.html", color_class=tag.color
             )
     return tags_html
 
