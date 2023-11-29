@@ -80,7 +80,7 @@ class Blog:
 
             self.blog_index.add_post(post)
             self.sitemap.update_sitemap(
-                url=f"https://www.marc-julian.de/{posts_path}/{post.html_path}",
+                url=f"https://www.marc-julian.de/{self.config.posts_path}/{post.html_path}",
                 lastmod=post.last_modified.strftime("%Y-%m-%d"),
             )
 
