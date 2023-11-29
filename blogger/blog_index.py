@@ -46,15 +46,19 @@ class BlogIndex:
         for i, p in enumerate(self.posts):
             if p.id == post.id:
                 self.posts.pop(i)
-                (posts_path / post.html_path).unlink()
+                if (posts_path / post.html_path).exists():
+                    print(f"Removing unused post: {post.title}")
+                    (posts_path / post.html_path).unlink()
                 break
 
     def remove_unused_tags(self, tags_path: Path):
         # remove tags that are no longer used
-        for tag in self.tags:
+        for tag in self.tags.copy():
             if not any(tag in post.tags for post in self.posts):
                 self.tags.discard(tag)
-                (tags_path / f"{tag.id}.html").unlink()
+                if (tags_path / f"{tag.id}.html").exists():
+                    print(f"Removing unused tag: {tag.name}")
+                    (tags_path / f"{tag.id}.html").unlink()
 
     def _to_json(self):
         return json.dumps(
@@ -63,6 +67,9 @@ class BlogIndex:
                 "tags": [tag.to_json() for tag in self.tags],
             }
         )
+
+    def post_in_index(self, post: BlogPost) -> bool:
+        return any(p.id == post.id for p in self.posts)
 
     def to_json(self):
         self.blog_index_path.write_text(self._to_json())

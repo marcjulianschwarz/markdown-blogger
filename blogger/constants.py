@@ -8,6 +8,3 @@ BLOG_TAGS_KEY = "blog-tags"
 BLOG_TITLE_KEY = "blog-title"
 BLOG_SUBTITLE_KEY = "blog-subtitle"
 BLOG_AUTHOR_KEY = "blog-author"
-
-TAGS_PATH = "tags"
-YEARS_PATH = "year"

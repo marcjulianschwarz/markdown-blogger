@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-from ast import parse
 
 from blogger.blog import Blog
 from blogger.conf import BlogConfig

@@ -53,8 +53,10 @@ class Blog:
         markdown_files = list(self.config.blog_in_path.glob("*.md"))
         self.log(str(len(markdown_files)), "FILES")
 
-        posts_path = self.config.blog_out_path / "posts"
+        posts_path = self.config.blog_out_path / self.config.posts_path
+        tags_path = self.config.blog_out_path / self.config.tags_path
         posts_path.mkdir(parents=True, exist_ok=True)
+        tags_path.mkdir(parents=True, exist_ok=True)
 
         for file in markdown_files:
             file_content = file.read_text()
@@ -65,9 +67,11 @@ class Blog:
                 if is_skip(post_meta):
                     self.log(file.name, "SKIP")
                     self.blog_index.remove_post(post, posts_path)
-                    self.blog_index.remove_unused_tags(self.config.tags_path)
+                    self.blog_index.remove_unused_tags(tags_path)
                     continue
-                if self.blog_index.not_modified(post):
+                if self.blog_index.not_modified(post) and self.blog_index.post_in_index(
+                    post
+                ):
                     self.log(file.name, "NOMOD")
                     continue
 
@@ -83,8 +87,7 @@ class Blog:
             )
 
     def create_tag_pages(self):
-        for tag in (pbar := tqdm(self.blog_index.tags)):
-            pbar.set_description(f"{tag.name}")
+        for tag in self.blog_index.tags:
             posts = [
                 post
                 for post in self.blog_index.posts
@@ -93,9 +96,6 @@ class Blog:
             ]
 
             tag_page = render_tag_page(tag, posts, self.config)
-            (self.config.blog_out_path / self.config.tags_path).mkdir(
-                parents=True, exist_ok=True
-            )
             (
                 self.config.blog_out_path / self.config.tags_path / f"{tag.id}.html"
             ).write_text(tag_page)
