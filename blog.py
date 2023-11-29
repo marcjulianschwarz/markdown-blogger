@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from ast import parse
 
 from blogger.blog import Blog
 from blogger.conf import BlogConfig
@@ -6,6 +7,7 @@ from blogger.conf import BlogConfig
 parser = ArgumentParser()
 parser.add_argument("action", choices=["update", "show"])
 args = parser.parse_args()
+
 
 config = BlogConfig.from_yaml("conf.yaml")
 blog = Blog(config=config)
@@ -17,6 +19,7 @@ if args.action == "update":
     blog.create_sitemap()
 
     blog.blog_index.to_json()
+
 
 elif args.action == "show":
     blog.open_blog()

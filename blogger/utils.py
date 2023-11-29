@@ -31,13 +31,6 @@ MARKDOWN_EXTRAS = [
 ]
 
 
-class BlogMode(Enum):
-    """Depending on the blog mode the output will either be made with local absolute paths or web relative paths."""
-
-    LOCAL = "local"
-    WEB = "web"
-
-
 def is_skip(post: Post) -> bool:
     if has_property(BLOG_SKIP_KEY, post):
         return post[BLOG_SKIP_KEY]
@@ -74,13 +67,12 @@ def get_date(post: Post):
         )
     )
     if len(date) == 0:
-        return dt(1970, 1, 1)
-
-    # elif type(date[0]) == str:
-    #     try:
-    #         return dt.strptime(date[0], "%Y-%m-%d")
-    #     except:
-    #         return dt(1970, 1, 1)
+        return dt(1970, 1, 1).date()
+    elif type(date[0]) == str:
+        try:
+            return dt.strptime(date[0], "%Y-%m-%d")
+        except:
+            return dt(1970, 1, 1).date()
 
     else:
         return date[0]

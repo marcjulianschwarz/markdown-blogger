@@ -5,7 +5,7 @@ class Tag:
         self.id = self.name.replace(" ", "").lower()
 
     def __hash__(self):
-        return hash(self.name)
+        return hash(self.name) + hash(self.color)
 
     def __eq__(self, o: object) -> bool:
         return self.name == o.name and self.color == o.color

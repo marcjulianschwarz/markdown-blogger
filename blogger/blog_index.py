@@ -1,13 +1,9 @@
 import json
-from datetime import datetime as dt
 from pathlib import Path
 from typing import List, Set
 
 from blogger.blogpost import BlogPost
-from blogger.constants import YEARS_PATH
-from blogger.render import render_blog_list, render_tag_list
 from blogger.tag import Tag
-from blogger.templates import Header, Templates
 
 
 class BlogIndex:
@@ -36,58 +32,29 @@ class BlogIndex:
     def add_post(self, post: BlogPost):
         # update post in post list if it already exists
         for i, p in enumerate(self.posts):
-            if p.path == post.path:
+            if p.id == post.id:
                 self.posts[i] = post
                 return
         else:
             self.posts.append(post)
 
         for tag in post.tags:
-            for i, t in enumerate(self.tags):
-                if t.name == tag.name:
-                    self.tags[i] = tag
-                    break
-            else:
-                self.tags.add(tag)
+            self.tags.discard(tag)  # Remove tag if present, do nothing otherwise
+            self.tags.add(tag)  # Add updated tag (if not present)
 
-    def _render_index(self) -> str:
-        archived_posts = [post for post in self.posts if post.archived]
-        non_archived_posts = [post for post in self.posts if not post.archived]
+    def remove_post(self, post: BlogPost, posts_path: Path):
+        for i, p in enumerate(self.posts):
+            if p.id == post.id:
+                self.posts.pop(i)
+                (posts_path / post.html_path).unlink()
+                break
 
-        post_list = render_blog_list(non_archived_posts)
-        archived_post_list = render_blog_list(archived_posts)
-
-        self.tags = sorted(list(self.tags), key=lambda tag: tag.lower())
-
-        # add years to the end of the tag list
-        # year_tags = self._create_year_tags()
-        # self.tags.extend(sorted(list(year_tags)))
-
-        return Templates.index().render(
-            recent_count=len(non_archived_posts),
-            archived_count=len(archived_posts),
-            post_list=post_list,
-            archived_post_list=archived_post_list,
-            all_tags_list=render_tag_list(self.tags),
-            header=Header().render(),
-        )
-
-    def _create_year_tags(self) -> Set[Tag]:
-        """Creates a set of year tags from the posts publish dates."""
-        year_tags = set()
-        for post in self.posts:
-            year_tags.add(
-                Tag(
-                    name=str(post.date.year),
-                    path=YEARS_PATH,
-                    color="tag-year",
-                )
-            )
-        return year_tags
-
-    def save_index(self, output_path: Path):
-        index_html = self._render_index()
-        (output_path / "index.html").write_text(index_html)
+    def remove_unused_tags(self, tags_path: Path):
+        # remove tags that are no longer used
+        for tag in self.tags:
+            if not any(tag in post.tags for post in self.posts):
+                self.tags.discard(tag)
+                (tags_path / f"{tag.id}.html").unlink()
 
     def _to_json(self):
         return json.dumps(
@@ -100,7 +67,7 @@ class BlogIndex:
     def to_json(self):
         self.blog_index_path.write_text(self._to_json())
 
-    def not_modified(self, file: Path) -> bool:
+    def not_modified(self, post: BlogPost) -> bool:
         """Checks if the post has been modified since the last build."""
         if not self.blog_index_path.exists():
             return False
@@ -108,10 +75,8 @@ class BlogIndex:
         with open(self.blog_index_path, "r") as f:
             data = json.load(f)
 
-        for post in data["posts"]:
-            if post["path"] == str(file):
-                return post["last_modified"] == dt.fromtimestamp(
-                    file.stat().st_mtime
-                ).strftime("%Y-%m-%d")
+        for p in data["posts"]:
+            if p["id"] == post.id:
+                return p["last_modified"] == post.last_modified.strftime("%Y-%m-%d")
 
         return False

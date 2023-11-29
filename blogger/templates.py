@@ -1,7 +1,4 @@
 from functools import cache
-from pathlib import Path
-
-from blogger.utils import BlogMode
 
 
 def read_template(name: str):

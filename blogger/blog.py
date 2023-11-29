@@ -9,7 +9,7 @@ from tqdm import tqdm
 from blogger.blog_index import BlogIndex
 from blogger.blogpost import BlogPost
 from blogger.conf import BlogConfig
-from blogger.render import render_blog_post, render_tag_page
+from blogger.render import render_blog_post, render_index, render_tag_page
 from blogger.sitemap import Sitemap
 from blogger.utils import create_http_handler, is_skip
 
@@ -52,24 +52,31 @@ class Blog:
         """
         markdown_files = list(self.config.blog_in_path.glob("*.md"))
         self.log(str(len(markdown_files)), "FILES")
+
+        posts_path = self.config.blog_out_path / "posts"
+        posts_path.mkdir(parents=True, exist_ok=True)
+
         for file in markdown_files:
             file_content = file.read_text()
             post_meta = frontmatter.loads(file_content)
+            post = BlogPost(post_meta, file)
 
-            if is_skip(post_meta):
-                self.log(file.name, "SKIP")
-                continue
-            if self.blog_index.not_modified(file):
-                self.log(file.name, "NOMOD")
-                continue
+            if not self.config.force_update:
+                if is_skip(post_meta):
+                    self.log(file.name, "SKIP")
+                    self.blog_index.remove_post(post, posts_path)
+                    self.blog_index.remove_unused_tags(self.config.tags_path)
+                    continue
+                if self.blog_index.not_modified(post):
+                    self.log(file.name, "NOMOD")
+                    continue
 
             self.log(file.name, "POST")
-            post = BlogPost(post_meta, file)
-            post_html = render_blog_post(post)
-            post.save(self.config.blog_out_path, post_html)
+
+            post_html = render_blog_post(post, self.config)
+            (posts_path / post.html_path).write_text(post_html)
 
             self.blog_index.add_post(post)
-
             self.sitemap.update_sitemap(
                 url=f"https://www.marc-julian.de/posts/{str(post.date.year)}/{str(post.date.month)}/{urllib.parse.quote(file.stem)}.html",
                 lastmod=post.last_modified.strftime("%Y-%m-%d"),
@@ -85,7 +92,7 @@ class Blog:
                 or post.date.year == (tag.name.isnumeric() and int(tag.name))
             ]
 
-            tag_page = render_tag_page(tag, posts)
+            tag_page = render_tag_page(tag, posts, self.config)
             (self.config.blog_out_path / self.config.tags_path).mkdir(
                 parents=True, exist_ok=True
             )
@@ -94,7 +101,8 @@ class Blog:
             ).write_text(tag_page)
 
     def create_index(self):
-        self.blog_index.save_index(self.config.blog_out_path)
+        index_html = render_index(self.blog_index, self.config)
+        (self.config.blog_out_path / "index.html").write_text(index_html)
 
     def create_sitemap(self):
         self.sitemap.save_sitemap(self.config.blog_out_path)

@@ -6,44 +6,39 @@ from frontmatter import Post
 
 from blogger.constants import (
     BLOG_AUTHOR_KEY,
-    BLOG_SKIP_KEY,
     BLOG_SUBTITLE_KEY,
     BLOG_TAGS_KEY,
     BLOG_TITLE_KEY,
-    TAGS_PATH,
-    YEARS_PATH,
 )
 from blogger.tag import Tag
-from blogger.utils import get_date, has_property, is_archived
+from blogger.utils import get_date, is_archived
 
 
 class BlogPost:
-    def __init__(self, post_meta: Post, file: Path):
-        self.title = post_meta.get(BLOG_TITLE_KEY) or file.stem
+    def __init__(self, post_meta: Post, markdown_file: Path):
+        self.title = post_meta.get(BLOG_TITLE_KEY) or markdown_file.stem
         self.subtitle = post_meta.get(BLOG_SUBTITLE_KEY) or ""
         self.author = post_meta.get(BLOG_AUTHOR_KEY) or "Marc Julian Schwarz"
         self.desc = f"{self.title} - {self.subtitle} - {self.author}"
         self.content = post_meta.content
-        self.path = file
-        self.last_modified = dt.fromtimestamp(file.stat().st_mtime)
+        self.markdown_file = markdown_file
+        self.id = markdown_file.stem
+        self.last_modified = dt.fromtimestamp(markdown_file.stat().st_mtime)
 
-        self.date = (
-            get_date(post_meta) if not self._is_demo(post_meta) else dt.now().date()
-        )
+        self.date = get_date(post_meta)
         self.display_year = str(self.date.year)
         self.display_month = str(self.date.month).zfill(2)
 
         self.tags = self.get_tags(post_meta)
 
         self.archived = self.date.year < 2021 or is_archived(post_meta)
-        self.post_url = (
-            f"/{self.display_year}/{self.display_month}/{self.path.stem}.html"
-        )
+        self.html_path = Path(f"{self.id}.html")
 
     def get_tags(self, post_meta: Post) -> List[Tag]:
-        found_tags = post_meta.get(BLOG_TAGS_KEY, [])
-        tags2 = post_meta.get("tag", [])
-        found_tags.extend(tags2)
+        found_tags = []
+        keys = ["tag", BLOG_TAGS_KEY]
+        for key in keys:
+            found_tags.extend(post_meta.get(key, []))
 
         tags = [
             Tag(
@@ -60,17 +55,6 @@ class BlogPost:
         )
         return tags
 
-    def save(self, output_path: Path, post_html: str):
-        path = output_path / self.display_year / self.display_month
-        path.mkdir(parents=True, exist_ok=True)
-        (path / f"{self.path.stem}.html").write_text(post_html)
-
-    def _is_demo(self, post: Post) -> bool:
-        if has_property(BLOG_SKIP_KEY, post):
-            return post[BLOG_SKIP_KEY]
-        else:
-            return False
-
     def to_json(self):
         return {
             "title": self.title,
@@ -78,14 +62,24 @@ class BlogPost:
             "author": self.author,
             "desc": self.desc,
             "content": self.content,
-            "path": str(self.path),
+            "markdown_file": str(self.markdown_file),
             "date": self.date.strftime("%Y-%m-%d"),
             "display_year": self.display_year,
             "display_month": self.display_month,
             "tags": [tag.to_json() for tag in self.tags],
             "archived": self.archived,
-            "post_url": self.post_url,
+            "html_path": str(self.html_path),
             "last_modified": self.last_modified.strftime("%Y-%m-%d"),
+            "id": self.id,
+        }
+
+    def to_json_sparse(self):
+        return {
+            "markdown_file": str(self.markdown_file),
+            "date": self.date.strftime("%Y-%m-%d"),
+            "tags": [tag.id for tag in self.tags],
+            "last_modified": self.last_modified.strftime("%Y-%m-%d"),
+            "id": self.id,
         }
 
     @classmethod
@@ -96,12 +90,23 @@ class BlogPost:
         post.author = data["author"]
         post.desc = data["desc"]
         post.content = data["content"]
-        post.path = Path(data["path"])
+        post.markdown_file = Path(data["markdown_file"])
         post.date = dt.strptime(data["date"], "%Y-%m-%d").date()
         post.display_year = data["display_year"]
         post.display_month = data["display_month"]
         post.tags = [Tag.from_json(tag) for tag in data["tags"]]
         post.archived = data["archived"]
-        post.post_url = data["post_url"]
+        post.html_path = Path(data["html_path"])
         post.last_modified = dt.strptime(data["last_modified"], "%Y-%m-%d")
+        post.id = data["id"]
+        return post
+
+    @classmethod
+    def from_json_sparse(cls, data: dict):
+        post = cls.__new__(cls)
+        post.markdown_file = Path(data["markdown_file"])
+        post.date = dt.strptime(data["date"], "%Y-%m-%d").date()
+        post.tags = [Tag(id=tag) for tag in data["tags"]]
+        post.last_modified = dt.strptime(data["last_modified"], "%Y-%m-%d")
+        post.id = data["id"]
         return post
