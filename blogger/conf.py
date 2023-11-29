@@ -10,6 +10,7 @@ class BlogConfig:
     blog_index_path: Path
     posts_path: Path
     force_update: bool = False
+    media_path: Path = Path("media")
 
     def __init__(self, yaml) -> None:
         self.yaml = yaml
@@ -21,6 +22,9 @@ class BlogConfig:
 
         if "force_update" in yaml:
             self.force_update = yaml["force_update"]
+
+        if "media_path" in yaml:
+            self.media_path = Path(yaml["media_path"])
 
     @classmethod
     def from_yaml(cls, path: str | Path):

@@ -16,7 +16,6 @@ if args.action == "update":
     blog.create_index()
     blog.create_tag_pages()
     blog.create_sitemap()
-
     blog.blog_index.to_json()
 
 

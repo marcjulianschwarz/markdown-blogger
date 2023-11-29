@@ -4,7 +4,6 @@ import urllib.parse
 import webbrowser
 
 import frontmatter
-from tqdm import tqdm
 
 from blogger.blog_index import BlogIndex
 from blogger.blogpost import BlogPost
@@ -82,7 +81,7 @@ class Blog:
 
             self.blog_index.add_post(post)
             self.sitemap.update_sitemap(
-                url=f"https://www.marc-julian.de/posts/{str(post.date.year)}/{str(post.date.month)}/{urllib.parse.quote(file.stem)}.html",
+                url=f"https://www.marc-julian.de/{posts_path}/{post.html_path}",
                 lastmod=post.last_modified.strftime("%Y-%m-%d"),
             )
 

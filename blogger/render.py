@@ -56,6 +56,8 @@ def render_blog_post(post: BlogPost, config: BlogConfig) -> str:
         extras=MARKDOWN_EXTRAS,
     )
 
+    html = html.replace('src="/images/', f'src="/{config.media_path}/')
+
     tag_list = render_tag_list(post.tags, config=config)
 
     meta = Templates.meta().render(
