@@ -1,6 +1,5 @@
 import socket
 import socketserver
-import urllib.parse
 import webbrowser
 
 import frontmatter
@@ -68,11 +67,11 @@ class Blog:
                     self.blog_index.remove_post(post, posts_path)
                     self.blog_index.remove_unused_tags(tags_path)
                     continue
-                if self.blog_index.not_modified(post) and self.blog_index.post_in_index(
-                    post
-                ):
-                    self.log(file.name, "NOMOD")
-                    continue
+                # if self.blog_index.not_modified(post) and self.blog_index.post_in_index(
+                #     post
+                # ):
+                #     self.log(file.name, "NOMOD")
+                #     continue
 
             self.log(file.name, "POST")
 
