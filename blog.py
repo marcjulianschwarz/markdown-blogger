@@ -13,9 +13,12 @@ blog = Blog(config=config)
 
 if args.action == "update":
     blog.build_index_and_create_posts()
+
     blog.create_index()
     blog.create_tag_pages()
+    blog.create_recent_posts()
     blog.create_sitemap()
+
     blog.blog_index.to_json()
 
 

@@ -31,8 +31,8 @@ class BlogPost:
 
         self.tags = self.get_tags(post_meta)
 
-        self.archived = self.date.year < 2021 or is_archived(post_meta)
-        self.html_path = Path(f"{self.id}.html")
+        self.archived = is_archived(post_meta)
+        self.html_path = Path(self.markdown_file.stem)
 
     def get_tags(self, post_meta: Post) -> List[Tag]:
         found_tags = []

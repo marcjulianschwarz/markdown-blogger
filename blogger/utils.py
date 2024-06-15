@@ -16,18 +16,15 @@ from blogger.constants import (
 # these are extensions for the markdown2 package
 # see https://github.com/trentm/python-markdown2/wiki/Extras for more
 MARKDOWN_EXTRAS = [
-    "code-friendly",
     "fenced-code-blocks",
+    "code-friendly",
+    "latex",
+    "strike",
     "cuddled-lists",
-    # "metadata", # -> bug where first line will not be parsed
     "tables",
-    "spoiler",
-    "task-lists",
     "wiki-tables",
     "mermaid",
     "tag-friendly",
-    # "target-blank-links",
-    "strike",
 ]
 
 

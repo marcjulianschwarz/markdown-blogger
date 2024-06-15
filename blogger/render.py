@@ -1,7 +1,6 @@
 from typing import List
 
-import markdown2
-
+from blogger import markdown2
 from blogger.blog_index import BlogIndex
 from blogger.blogpost import BlogPost
 from blogger.conf import BlogConfig
@@ -20,7 +19,7 @@ def render_tag_list(tags: List[Tag], config: BlogConfig) -> str:
         if tag and _valid_tag_name(tag.name):
             tags_html += Templates.tag().render(
                 name=str(tag.name),
-                link=f"/{config.tags_path}/{tag.id}.html",
+                link=f"/blog/{config.tags_path}/{tag.id}.html",
                 color_class=tag.color,
             )
     return tags_html
@@ -28,19 +27,20 @@ def render_tag_list(tags: List[Tag], config: BlogConfig) -> str:
 
 def render_blog_list(posts: List[BlogPost], config: BlogConfig) -> str:
     post_list = ""
-    for post in sorted(posts, key=lambda x: x.date, reverse=True):
+    for post in posts:
         post_entry = Templates.post_list_entry().render(
             title=post.title,
             subtitle=post.subtitle,
             author=post.author,
             date=post.date.strftime("%d.%m.%Y"),
-            link=f"/{config.posts_path / post.html_path}",
+            link=f"/blog/{config.posts_path / post.html_path}",
         )
         post_list += post_entry
     return post_list
 
 
 def render_tag_page(tag: Tag, posts: List[BlogPost], config: BlogConfig) -> str:
+    posts = sorted(posts, key=lambda x: x.date, reverse=True)
     post_list = render_blog_list(posts, config)
     return Templates.tag_page().render(
         name=tag.name,
@@ -56,7 +56,7 @@ def render_blog_post(post: BlogPost, config: BlogConfig) -> str:
         extras=MARKDOWN_EXTRAS,
     )
 
-    html = html.replace('src="/images/', f'src="/{config.media_path}/')
+    html = html.replace('src="/images/', f'src="/blog/{config.media_path}/')
 
     tag_list = render_tag_list(post.tags, config=config)
 
@@ -83,6 +83,9 @@ def render_blog_post(post: BlogPost, config: BlogConfig) -> str:
 def render_index(blog_index: BlogIndex, config: BlogConfig) -> str:
     archived_posts = [post for post in blog_index.posts if post.archived]
     non_archived_posts = [post for post in blog_index.posts if not post.archived]
+
+    non_archived_posts = sorted(non_archived_posts, key=lambda x: x.date, reverse=True)
+    archived_posts = sorted(archived_posts, key=lambda x: x.date, reverse=True)
 
     post_list = render_blog_list(non_archived_posts, config)
     archived_post_list = render_blog_list(archived_posts, config)

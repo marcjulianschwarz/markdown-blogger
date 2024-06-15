@@ -56,4 +56,4 @@ class Templates:
 class Header:
     @staticmethod
     def render():
-        return Templates.header().render(home_link="/")
+        return Templates.header().render(home_link="/blog")

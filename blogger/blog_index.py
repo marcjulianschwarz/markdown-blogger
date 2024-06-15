@@ -22,6 +22,7 @@ class BlogIndex:
         return blog_index
 
     def sort_posts(self, by: str = "date"):
+        """Sort post by date or title"""
         if by == "date":
             self.posts.sort(key=lambda post: post.date, reverse=True)
         elif by == "title":
@@ -34,10 +35,12 @@ class BlogIndex:
         for i, p in enumerate(self.posts):
             if p.id == post.id:
                 self.posts[i] = post
-                return
+                break
+        # otherwise add it as a new one
         else:
             self.posts.append(post)
 
+        # update tags with the tags from the new post
         for tag in post.tags:
             self.tags.discard(tag)  # Remove tag if present, do nothing otherwise
             self.tags.add(tag)  # Add updated tag (if not present)

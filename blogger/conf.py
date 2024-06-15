@@ -12,7 +12,7 @@ class BlogConfig:
     force_update: bool = False
     media_path: Path = Path("media")
 
-    def __init__(self, yaml) -> None:
+    def __init__(self, yaml: dict) -> None:
         self.yaml = yaml
         self.blog_in_path = Path(yaml["blog_in_path"])
         self.blog_out_path = Path(yaml["blog_out_path"])

@@ -7,7 +7,12 @@ import frontmatter
 from blogger.blog_index import BlogIndex
 from blogger.blogpost import BlogPost
 from blogger.conf import BlogConfig
-from blogger.render import render_blog_post, render_index, render_tag_page
+from blogger.render import (
+    render_blog_list,
+    render_blog_post,
+    render_index,
+    render_tag_page,
+)
 from blogger.sitemap import Sitemap
 from blogger.utils import create_http_handler, is_skip
 
@@ -73,10 +78,13 @@ class Blog:
                 #     self.log(file.name, "NOMOD")
                 #     continue
 
-            self.log(file.name, "POST")
+            self.log(file.name, "GENERATE POST")
 
             post_html = render_blog_post(post, self.config)
-            (posts_path / post.html_path).write_text(post_html)
+            html_path = posts_path / post.html_path
+            if not html_path.exists():
+                html_path.mkdir()
+            (html_path / "index.html").write_text(post_html)
 
             self.blog_index.add_post(post)
             self.sitemap.update_sitemap(
@@ -86,14 +94,14 @@ class Blog:
 
     def create_tag_pages(self):
         for tag in self.blog_index.tags:
-            posts = [
+            tagged_posts = [
                 post
                 for post in self.blog_index.posts
                 if tag in post.tags
                 or post.date.year == (tag.name.isnumeric() and int(tag.name))
             ]
 
-            tag_page = render_tag_page(tag, posts, self.config)
+            tag_page = render_tag_page(tag, tagged_posts, self.config)
             (
                 self.config.blog_out_path / self.config.tags_path / f"{tag.id}.html"
             ).write_text(tag_page)
@@ -101,6 +109,13 @@ class Blog:
     def create_index(self):
         index_html = render_index(self.blog_index, self.config)
         (self.config.blog_out_path / "index.html").write_text(index_html)
+
+    def create_recent_posts(self):
+        sorted_posts = sorted(
+            list(self.blog_index.posts), key=lambda post: post.date, reverse=True
+        )
+        recent_posts_html = render_blog_list(sorted_posts[:5], self.config)
+        (self.config.blog_out_path / "recent_posts.html").write_text(recent_posts_html)
 
     def create_sitemap(self):
         self.sitemap.save_sitemap(self.config.blog_out_path)
