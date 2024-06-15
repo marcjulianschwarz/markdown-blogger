@@ -102,9 +102,10 @@ class Blog:
             ]
 
             tag_page = render_tag_page(tag, tagged_posts, self.config)
-            (
-                self.config.blog_out_path / self.config.tags_path / f"{tag.id}.html"
-            ).write_text(tag_page)
+            tag_folder = self.config.blog_out_path / self.config.tags_path / tag.id
+            if not tag_folder.exists():
+                tag_folder.mkdir()
+            (tag_folder / "index.html").write_text(tag_page)
 
     def create_index(self):
         index_html = render_index(self.blog_index, self.config)

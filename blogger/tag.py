@@ -2,7 +2,7 @@ class Tag:
     def __init__(self, name: str | int, color: str) -> None:
         self.name = str(name)
         self.color = color
-        self.id = self.name.replace(" ", "").lower()
+        self.id = self.name.replace(" ", "-").lower()
 
     def __hash__(self):
         return hash(self.name) + hash(self.color)

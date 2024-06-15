@@ -19,7 +19,7 @@ def render_tag_list(tags: List[Tag], config: BlogConfig) -> str:
         if tag and _valid_tag_name(tag.name):
             tags_html += Templates.tag().render(
                 name=str(tag.name),
-                link=f"/blog/{config.tags_path}/{tag.id}.html",
+                link=f"/blog/{config.tags_path}/{tag.id}/",
                 color_class=tag.color,
             )
     return tags_html
