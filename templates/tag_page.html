@@ -40,10 +40,11 @@
     <link rel="stylesheet" href="/styles/blog.css" />
   </head>
   <body>
-    <main>
+    <main class="main-width-control">
       {header}
-      <article class="article-control">
-        <h2>{name} ({count})</h2>
+      <article class="article-control" id="tag-page">
+        <h1>{name}</h1>
+        <p>{count} posts</p>
         <div class="posts">{post_list}</div>
       </article>
     </main>
