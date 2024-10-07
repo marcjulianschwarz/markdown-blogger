@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 from typing import List, Set
 
@@ -51,17 +52,18 @@ class BlogIndex:
                 self.posts.pop(i)
                 if (posts_path / post.html_path).exists():
                     print(f"Removing unused post: {post.title}")
-                    (posts_path / post.html_path).unlink()
+                    shutil.rmtree(posts_path / post.html_path)
                 break
 
-    def remove_unused_tags(self, tags_path: Path):
+    def remove_unused_tags(self, tags_path: Path, post: BlogPost):
         # remove tags that are no longer used
-        for tag in self.tags.copy():
+        for tag in post.tags:
             if not any(tag in post.tags for post in self.posts):
+                print(tag.name)
                 self.tags.discard(tag)
-                if (tags_path / f"{tag.id}.html").exists():
+                if (tags_path / f"{tag.id}").exists():
                     print(f"Removing unused tag: {tag.name}")
-                    (tags_path / f"{tag.id}.html").unlink()
+                    shutil.rmtree(tags_path / f"{tag.id}")
 
     def _to_json(self):
         return json.dumps(

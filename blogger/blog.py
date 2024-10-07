@@ -69,8 +69,8 @@ class Blog:
             if not self.config.force_update:
                 if is_skip(post_meta):
                     self.log(file.name, "SKIP")
+                    self.blog_index.remove_unused_tags(tags_path, post)
                     self.blog_index.remove_post(post, posts_path)
-                    self.blog_index.remove_unused_tags(tags_path)
                     continue
                 # if self.blog_index.not_modified(post) and self.blog_index.post_in_index(
                 #     post
@@ -127,10 +127,10 @@ class Blog:
         httpd = None
 
         try:
-            with MyTCPServer(("", 8000), handler) as httpd:
+            with MyTCPServer(("", 8001), handler) as httpd:
                 httpd.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                print("serving at port", 8000)
-                webbrowser.open("http://localhost:8000")
+                print("serving at port", 8001)
+                webbrowser.open("http://localhost:8001")
                 httpd.serve_forever()
         except KeyboardInterrupt:
             print("Stopping server...")
