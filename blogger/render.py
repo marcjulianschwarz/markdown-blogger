@@ -61,9 +61,11 @@ def render_blog_post(post: BlogPost, config: BlogConfig) -> str:
     tag_list = render_tag_list(post.tags, config=config)
 
     meta = Templates.meta().render(
-        meta_desc=post.desc,
-        meta_author=post.author,
-        meta_keywords=",".join([tag.name for tag in post.tags]),
+        title=post.title,
+        description=post.desc,
+        author=post.author,
+        keywords=",".join([tag.name for tag in post.tags]),
+        canonical=f"https://marc-julian.com/blog/{config.posts_path / post.html_path}",
     )
 
     post_html = Templates.post().render(
