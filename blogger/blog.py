@@ -112,10 +112,13 @@ class Blog:
         (self.config.blog_out_path / "index.html").write_text(index_html)
 
     def create_recent_posts(self):
+        posts = self.blog_index.posts
+        non_archived_posts = filter(lambda post: not post.archived, posts)
         sorted_posts = sorted(
-            list(self.blog_index.posts), key=lambda post: post.date, reverse=True
+            non_archived_posts, key=lambda post: post.date, reverse=True
         )
-        recent_posts_html = render_blog_list(sorted_posts[:5], self.config)
+        recent_posts = sorted_posts[:5]
+        recent_posts_html = render_blog_list(recent_posts, self.config)
         (self.config.blog_out_path / "recent_posts.html").write_text(recent_posts_html)
 
     def create_sitemap(self):
