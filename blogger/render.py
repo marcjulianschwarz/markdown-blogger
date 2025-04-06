@@ -42,11 +42,21 @@ def render_blog_list(posts: List[BlogPost], config: BlogConfig) -> str:
 def render_tag_page(tag: Tag, posts: List[BlogPost], config: BlogConfig) -> str:
     posts = sorted(posts, key=lambda x: x.date, reverse=True)
     post_list = render_blog_list(posts, config)
+    meta = Templates.meta().render(
+        title=tag.name,
+        description=tag.name
+        + " |  Marc Julian Schwarz - Data Scientist at AHEAD Automotive GmbH",
+        author="Marc Julian Schwarz",
+        keywords=tag.name,
+        canonical=f"https://marc-julian.com/blog/{config.tags_path / tag.id}",
+    )
     return Templates.tag_page().render(
         name=tag.name,
         count=len(posts),
         post_list=post_list,
         header=Header().render(),
+        meta=meta,
+        title=tag.name,
     )
 
 
