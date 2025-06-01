@@ -15,7 +15,7 @@ from blogger.render import (
 )
 from blogger.sitemap import Sitemap
 from blogger.utils import create_http_handler, is_skip
-
+from feedgen.feed import FeedGenerator
 
 class Blog:
     def __init__(
@@ -41,6 +41,18 @@ class Blog:
         else:
             self.blog_index = BlogIndex(config.blog_index_path)
         self.sitemap = Sitemap()
+        self.rss_generator = FeedGenerator()
+        self.init_rss_feed()
+
+    def init_rss_feed(self):
+        self.rss_generator.id('https://marc-julian.com/blog')
+        self.rss_generator.title('Marc Julian - Blog')
+        self.rss_generator.author( {'name':'Marc Julian Schwarz'} )
+        self.rss_generator.link( href='https://marc-julian.com/blog', rel='alternate' )
+        # self.rssGenerator.logo('http://ex.com/logo.jpg')
+        self.rss_generator.subtitle('This is a cool feed!')
+        self.rss_generator.link( href='https://marc-julian.com/blog/rss.xml', rel='self' )
+        self.rss_generator.language('en')
 
     def build_index_and_create_posts(self):
         """
@@ -87,10 +99,16 @@ class Blog:
             (html_path / "index.html").write_text(post_html)
 
             self.blog_index.add_post(post)
+
+            post_url = f"https://www.marc-julian.com/blog/{self.config.posts_path}/{post.html_path}"
             self.sitemap.update_sitemap(
-                url=f"https://www.marc-julian.de/{self.config.posts_path}/{post.html_path}",
+                url=post_url,
                 lastmod=post.last_modified.strftime("%Y-%m-%d"),
             )
+            fe = self.rss_generator.add_entry()
+            fe.id(post_url)
+            fe.title(post.title)
+            fe.link(href=post_url)
 
     def create_tag_pages(self):
         for tag in self.blog_index.tags:
@@ -123,6 +141,9 @@ class Blog:
 
     def create_sitemap(self):
         self.sitemap.save_sitemap(self.config.blog_out_path)
+
+    def create_rss_feed(self):
+        self.rss_generator.rss_file(self.config.blog_out_path / 'rss.xml')
 
     def open_blog(self):
         # start http server at output path

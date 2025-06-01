@@ -18,6 +18,7 @@ if args.action == "update":
     blog.create_tag_pages()
     blog.create_recent_posts()
     blog.create_sitemap()
+    blog.create_rss_feed()
 
     blog.blog_index.to_json()
 
